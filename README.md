@@ -1,0 +1,3 @@
+# Alemeno Backend
+
+- Postgresql + SQLAlchemy 
