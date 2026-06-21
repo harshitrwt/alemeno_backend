@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from database import Base, engine, get_db
 import models
 import schemas
+import pandas as pd
 from tasks import process_job
 
 app = FastAPI(title="Transaction Processing Pipeline")
@@ -13,11 +14,19 @@ app = FastAPI(title="Transaction Processing Pipeline")
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+REQUIRED_COLUMNS = {
+    "txn_id", "date", "merchant", "amount", "currency",
+    "status", "category", "account_id", "notes",
+}
 
 @app.on_event("startup")
 def on_startup():
     Base.metadata.create_all(bind=engine)
 
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the Transaction Processing API. Use /docs for API documentation."}
 
 @app.post("/jobs/upload")
 def upload_csv(file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -27,6 +36,18 @@ def upload_csv(file: UploadFile = File(...), db: Session = Depends(get_db)):
     file_path = os.path.join(UPLOAD_DIR, file.filename)
     with open(file_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
+
+    try:
+        preview = pd.read_csv(file_path, nrows=1)
+    except Exception:
+        raise HTTPException(status_code=400, detail="File is empty or not a valid CSV")
+
+    missing = REQUIRED_COLUMNS - set(preview.columns)
+    if missing:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Missing required columns: {', '.join(missing)}",
+        )
 
     job = models.Job(filename=file.filename, status="pending")
     db.add(job)
