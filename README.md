@@ -38,8 +38,14 @@ Groq offers a free tier that is sufficient for running this project. To get a ke
 
 ## Setting Up the Project
 
-1. Copy the file named .env.example to a new file named .env
-2. Open .env and replace the placeholder value for GROQ_API_KEY with your actual Groq API key
+1. Clone the project.
+2. Run command
+   ```
+     pip install requirements.txt
+   ```
+
+3. Copy the file named .env.example to a new file named .env
+4. Open .env and replace the placeholder value for GROQ_API_KEY with your actual Groq API key
 
 ## Running the Project
 
